@@ -63,6 +63,15 @@ npm.cmd run build
 docker compose up -d --build
 ```
 
+如果 Docker 在 `RUN npm ci` 报 `Exit handler never called!`，先清理旧构建缓存后重建：
+
+```bash
+docker compose down
+docker builder prune -f
+docker compose build --no-cache
+docker compose up -d
+```
+
 打开：
 
 ```text
