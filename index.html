@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>个人工作台</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Algorithm Engineer Console</p>
+          <h1>个人工作台</h1>
+        </div>
+        <div class="toolbar">
+          <button class="ghost" id="exportBtn" type="button" title="导出 JSON">
+            <span aria-hidden="true">⇩</span>
+            导出
+          </button>
+          <label class="ghost file-trigger" title="导入 JSON">
+            <span aria-hidden="true">⇧</span>
+            导入
+            <input id="importInput" type="file" accept="application/json" />
+          </label>
+          <button class="danger ghost" id="clearAllBtn" type="button" title="清空本地数据">
+            清空
+          </button>
+        </div>
+      </header>
+
+      <section class="notice" role="note">
+        <strong>本地存储提示：</strong>
+        数据保存在当前浏览器的 localStorage。适合个人离线工作台；如果要多人共用或保存高敏密码，建议后续接入加密后端。
+        <span class="sync-status" id="backendStatus">后端连接中</span>
+      </section>
+
+      <section class="quick-grid">
+        <form class="panel composer" id="commandForm">
+          <div class="panel-head">
+            <div>
+              <p class="section-kicker">Commands</p>
+              <h2>命令暂存</h2>
+            </div>
+            <button class="secondary" id="pasteCommandBtn" type="button">粘贴剪贴板</button>
+          </div>
+          <div class="form-row">
+            <label for="commandTitle">名称</label>
+            <input id="commandTitle" name="title" type="text" placeholder="如：启动训练任务" autocomplete="off" />
+          </div>
+          <div class="form-row">
+            <label for="commandTags">标签</label>
+            <input id="commandTags" name="tags" type="text" placeholder="gpu, docker, train" autocomplete="off" />
+          </div>
+          <div class="form-row grow">
+            <label for="commandText">命令</label>
+            <textarea id="commandText" name="command" placeholder="把常用命令粘贴到这里"></textarea>
+          </div>
+          <button class="primary" type="submit">保存命令</button>
+        </form>
+
+        <form class="panel composer" id="credentialForm">
+          <div class="panel-head">
+            <div>
+              <p class="section-kicker">SSH & Accounts</p>
+              <h2>服务器账号</h2>
+            </div>
+            <button class="secondary" id="pasteIpBtn" type="button">粘贴 IP</button>
+          </div>
+          <div class="field-grid">
+            <div class="form-row">
+              <label for="credentialName">名称</label>
+              <input id="credentialName" name="name" type="text" placeholder="如：A100 训练机" autocomplete="off" />
+            </div>
+            <div class="form-row">
+              <label for="credentialHost">IP / Host</label>
+              <input id="credentialHost" name="host" type="text" placeholder="192.168.1.10" autocomplete="off" />
+            </div>
+            <div class="form-row">
+              <label for="credentialUser">用户名</label>
+              <input id="credentialUser" name="username" type="text" placeholder="root / user" autocomplete="off" />
+            </div>
+            <div class="form-row">
+              <label for="credentialPort">端口</label>
+              <input id="credentialPort" name="port" type="number" placeholder="22" min="1" max="65535" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="credentialPassword">密码 / Token</label>
+            <input id="credentialPassword" name="password" type="password" placeholder="可留空" autocomplete="new-password" />
+          </div>
+          <div class="form-row">
+            <label for="credentialNote">备注</label>
+            <input id="credentialNote" name="note" type="text" placeholder="内网/VPN/项目说明" autocomplete="off" />
+          </div>
+          <button class="primary" type="submit">保存账号</button>
+        </form>
+
+        <form class="panel composer calendar-panel" id="calendarForm">
+          <div class="panel-head">
+            <div>
+              <p class="section-kicker">Work Calendar</p>
+              <h2>工作日历</h2>
+            </div>
+            <button class="secondary" id="todayBtn" type="button">今天</button>
+          </div>
+          <div class="form-row">
+            <label for="calendarDate">日期</label>
+            <input id="calendarDate" name="date" type="date" />
+          </div>
+          <div class="form-row grow">
+            <label for="calendarDone">已经做了</label>
+            <textarea id="calendarDone" name="done" placeholder="今天完成了哪些事情"></textarea>
+          </div>
+          <div class="form-row grow">
+            <label for="calendarPlanned">计划去做</label>
+            <textarea id="calendarPlanned" name="planned" placeholder="接下来计划推进什么"></textarea>
+          </div>
+          <div class="form-row">
+            <label for="calendarNote">备注</label>
+            <input id="calendarNote" name="note" type="text" placeholder="阻塞、风险、会议结论等" autocomplete="off" />
+          </div>
+          <button class="primary" type="submit">保存日历</button>
+        </form>
+      </section>
+
+      <section class="workspace">
+        <div class="list-head">
+          <div class="tabs" role="tablist" aria-label="工作台列表">
+            <button class="tab active" data-tab="commands" type="button">命令</button>
+            <button class="tab" data-tab="credentials" type="button">账号</button>
+            <button class="tab" data-tab="calendar" type="button">日历</button>
+          </div>
+          <label class="search">
+            <span aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" placeholder="搜索名称、内容、标签、IP" />
+          </label>
+        </div>
+        <div class="list" id="list"></div>
+        <div class="empty" id="emptyState" hidden>
+          暂无内容，先从上面的表单保存一条。
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <template id="commandCardTemplate">
+      <article class="item-card">
+        <div class="item-main">
+          <div class="item-title-line">
+            <h3></h3>
+            <span class="time"></span>
+          </div>
+          <pre></pre>
+          <div class="tags"></div>
+        </div>
+        <div class="actions">
+          <button class="copy primary small" type="button">复制</button>
+          <button class="edit secondary small" type="button">编辑</button>
+          <button class="delete danger small" type="button">删除</button>
+        </div>
+      </article>
+    </template>
+
+    <template id="credentialCardTemplate">
+      <article class="item-card credential-card">
+        <div class="item-main">
+          <div class="item-title-line">
+            <h3></h3>
+            <span class="time"></span>
+          </div>
+          <div class="credential-grid"></div>
+          <p class="note"></p>
+        </div>
+        <div class="actions credential-actions">
+          <button class="copy-host secondary small" type="button">复制 IP</button>
+          <button class="copy-user secondary small" type="button">复制用户</button>
+          <button class="copy-password primary small" type="button">复制密码</button>
+          <button class="copy-ssh primary small" type="button">复制 SSH</button>
+          <button class="edit secondary small" type="button">编辑</button>
+          <button class="delete danger small" type="button">删除</button>
+        </div>
+      </article>
+    </template>
+
+    <template id="calendarCardTemplate">
+      <article class="item-card calendar-card">
+        <div class="item-main">
+          <div class="item-title-line">
+            <h3></h3>
+            <span class="time"></span>
+          </div>
+          <div class="calendar-columns">
+            <section class="calendar-block">
+              <span>已经做了</span>
+              <p class="done"></p>
+            </section>
+            <section class="calendar-block">
+              <span>计划去做</span>
+              <p class="planned"></p>
+            </section>
+          </div>
+          <p class="note"></p>
+        </div>
+        <div class="actions">
+          <button class="copy primary small" type="button">复制日报</button>
+          <button class="edit secondary small" type="button">编辑</button>
+          <button class="delete danger small" type="button">删除</button>
+        </div>
+      </article>
+    </template>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

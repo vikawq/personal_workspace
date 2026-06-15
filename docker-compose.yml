@@ -1,0 +1,26 @@
+services:
+  frontend:
+    build: .
+    container_name: personal-workbench-frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: personal-workbench-backend
+    environment:
+      - PORT=3000
+      - DATA_FILE=/data/workbench.json
+      # Optional: set API_TOKEN and send Authorization: Bearer <token> if you expose this beyond localhost.
+      - API_TOKEN=
+    volumes:
+      - workbench-data:/data
+    restart: unless-stopped
+
+volumes:
+  workbench-data:

@@ -1,0 +1,6 @@
+server.*.log
+server*.log
+dist/
+node_modules/
+backend/dist/
+data/
