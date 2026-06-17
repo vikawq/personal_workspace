@@ -27,6 +27,8 @@ services:
     environment:
       - PORT=3000
       - DATA_FILE=/data/workbench.json
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env. Use at least 32 characters.}
+      - ENCRYPTION_SALT=${ENCRYPTION_SALT:-personal-workbench:v1}
       # Optional: set API_TOKEN and send Authorization: Bearer <token> if you expose this beyond localhost.
       - API_TOKEN=
     volumes:

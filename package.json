@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "dev:frontend": "vite --host 0.0.0.0",
-    "dev:backend": "npm run backend:build && node --watch backend/dist/server.js",
+    "dev:backend": "npm run backend:build && node --env-file=.env --watch backend/dist/server.js",
     "build": "npm run build:frontend && npm run backend:build",
     "build:frontend": "tsc --noEmit && vite build",
     "backend:build": "tsc -p backend/tsconfig.json",

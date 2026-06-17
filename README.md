@@ -15,6 +15,18 @@
 
 ## 本地开发
 
+先准备 `.env`，并填入 `ENCRYPTION_KEY`：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+可以用 WSL 生成密钥：
+
+```bash
+openssl rand -base64 32
+```
+
 安装依赖：
 
 ```powershell
@@ -62,6 +74,20 @@ npm.cmd run build
 ```bash
 cp .env.example .env
 ```
+
+后端磁盘文件只保存密文，必须在 `.env` 里配置加密密钥：
+
+```bash
+openssl rand -base64 32
+```
+
+把输出填到：
+
+```bash
+ENCRYPTION_KEY=这里填 openssl 生成的随机值
+```
+
+`ENCRYPTION_KEY` 丢失后，Docker volume 里的历史数据将无法解密。已有明文 `workbench.json` 会在后端首次读取时自动迁移为密文。
 
 只需要 npm 镜像源时，在 `.env` 里设置：
 
@@ -117,7 +143,7 @@ docker compose down
 
 ## 安全说明
 
-当前版本是本地后端，密码会保存到本机 Docker volume，同时浏览器 localStorage 会缓存一份。它适合单人、本机、低摩擦使用。如果要保存高敏凭据，建议下一步增加主密码加密或接入系统密钥管理。
+后端 Docker volume 里只保存 AES-256-GCM 密文，密钥来自 `.env` 的 `ENCRYPTION_KEY`。浏览器 localStorage 仍会缓存一份前端数据，因此这仍适合单人、本机、低摩擦使用；如果浏览器所在机器也需要更强保护，下一步可以继续加前端主密码加密。
 
 ## 文件结构
 

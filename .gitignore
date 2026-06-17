@@ -1,5 +1,6 @@
 server.*.log
 server*.log
+.env
 dist/
 node_modules/
 backend/dist/

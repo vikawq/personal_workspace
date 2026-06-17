@@ -1,7 +1,7 @@
 import { loadRemoteState, saveRemoteState } from "./api";
 import { copyText, readClipboard } from "./clipboard";
 import { parseSshText } from "./ssh";
-import { loadState, sanitizeState, saveState } from "./storage";
+import { loadState, normalizeCredentialPassword, sanitizeState, saveState } from "./storage";
 import type {
   CalendarEntry,
   CommandItem,
@@ -192,7 +192,9 @@ function renderCredential(item: CredentialItem): HTMLElement {
 
   queryIn<HTMLButtonElement>(node, ".copy-host").addEventListener("click", () => void copyWithToast(item.host, "IP 已复制"));
   queryIn<HTMLButtonElement>(node, ".copy-user").addEventListener("click", () => void copyWithToast(item.username, "用户名已复制"));
-  queryIn<HTMLButtonElement>(node, ".copy-password").addEventListener("click", () => void copyWithToast(item.password, "密码已复制"));
+  queryIn<HTMLButtonElement>(node, ".copy-password").addEventListener("click", () =>
+    void copyWithToast(normalizeCredentialPassword(item.password), "密码已复制"),
+  );
   queryIn<HTMLButtonElement>(node, ".copy-ssh").addEventListener("click", () => {
     const port = item.port || "22";
     void copyWithToast(`ssh -p ${port} ${item.username}@${item.host}`, "SSH 命令已复制");
@@ -258,7 +260,7 @@ function editCredential(item: CredentialItem): void {
   els.credentialHost.value = item.host;
   els.credentialUser.value = item.username;
   els.credentialPort.value = item.port || "22";
-  els.credentialPassword.value = item.password;
+  els.credentialPassword.value = normalizeCredentialPassword(item.password);
   els.credentialNote.value = item.note;
   query<HTMLButtonElement>("#credentialForm button[type='submit']").textContent = "更新账号";
   els.credentialHost.focus();
@@ -363,7 +365,7 @@ els.credentialForm.addEventListener("submit", (event) => {
     host,
     username: els.credentialUser.value.trim() || "root",
     port: els.credentialPort.value.trim() || "22",
-    password: els.credentialPassword.value,
+    password: normalizeCredentialPassword(els.credentialPassword.value),
     note: els.credentialNote.value.trim(),
     createdAt: new Date().toISOString(),
   });
@@ -516,8 +518,13 @@ async function hydrateFromBackend(): Promise<void> {
   try {
     const remote = await loadRemoteState();
     if (hasContent(remote.state)) {
-      state = sanitizeState(remote.state);
+      const sanitized = sanitizeState(remote.state);
+      const shouldRepairRemote = JSON.stringify(remote.state) !== JSON.stringify(sanitized);
+      state = sanitized;
       saveState(state);
+      if (shouldRepairRemote) {
+        await saveRemoteState(state);
+      }
       render();
       setBackendStatus("后端已连接", "ok");
       return;

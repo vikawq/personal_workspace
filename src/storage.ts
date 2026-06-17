@@ -1,4 +1,4 @@
-import type { WorkbenchState } from "./types";
+import type { CredentialItem, WorkbenchState } from "./types";
 
 export const STORE_KEY = "personal-workbench-v1";
 
@@ -46,7 +46,18 @@ export function saveState(state: WorkbenchState): void {
 export function sanitizeState(value: Partial<WorkbenchState>): WorkbenchState {
   return {
     commands: Array.isArray(value.commands) ? value.commands : [],
-    credentials: Array.isArray(value.credentials) ? value.credentials : [],
+    credentials: Array.isArray(value.credentials) ? value.credentials.map(normalizeCredential) : [],
     calendar: Array.isArray(value.calendar) ? value.calendar : [],
+  };
+}
+
+export function normalizeCredentialPassword(value: string): string {
+  return value.replace(/^[\t\r\n]+|[\t\r\n]+$/g, "");
+}
+
+function normalizeCredential(item: CredentialItem): CredentialItem {
+  return {
+    ...item,
+    password: normalizeCredentialPassword(item.password ?? ""),
   };
 }

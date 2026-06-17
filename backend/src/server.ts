@@ -1,11 +1,14 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import type { PersistedVault, WorkbenchState } from "./types.js";
+import type { CredentialItem, EncryptedVault, PersistedVault, WorkbenchState } from "./types.js";
 
 const port = Number(process.env.PORT ?? 3000);
 const dataFile = process.env.DATA_FILE ?? "data/workbench.json";
 const apiToken = process.env.API_TOKEN ?? "";
+const encryptionKey = readEncryptionKey();
+const encryptionSalt = process.env.ENCRYPTION_SALT ?? "personal-workbench:v1";
 const maxBodyBytes = 2 * 1024 * 1024;
 
 const emptyState: WorkbenchState = {
@@ -27,7 +30,7 @@ createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
 
     if (request.method === "GET" && url.pathname === "/api/health") {
-      sendJson(response, 200, { ok: true, service: "personal-workbench-api" });
+      sendJson(response, 200, { ok: true, service: "personal-workbench-api", encryptedAtRest: true });
       return;
     }
 
@@ -90,11 +93,18 @@ function isAuthorized(request: IncomingMessage): boolean {
 async function readVault(): Promise<PersistedVault> {
   try {
     const content = await readFile(dataFile, "utf8");
-    const parsed = JSON.parse(content) as Partial<PersistedVault>;
-    return {
-      state: sanitizeState(parsed.state),
+    const raw = JSON.parse(content) as Partial<PersistedVault> | Partial<EncryptedVault>;
+    const parsed = isEncryptedVault(raw) ? decryptVault(raw) : raw;
+    const state = sanitizeState(parsed.state);
+    const vault = {
+      state,
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : "",
     };
+    if (!isEncryptedVault(raw) || JSON.stringify(parsed.state) !== JSON.stringify(state)) {
+      vault.updatedAt = new Date().toISOString();
+      await writeVault(vault);
+    }
+    return vault;
   } catch {
     return {
       state: emptyState,
@@ -106,8 +116,50 @@ async function readVault(): Promise<PersistedVault> {
 async function writeVault(vault: PersistedVault): Promise<void> {
   await mkdir(dirname(dataFile), { recursive: true });
   const tempFile = `${dataFile}.tmp`;
-  await writeFile(tempFile, `${JSON.stringify(vault, null, 2)}\n`, "utf8");
+  await writeFile(tempFile, `${JSON.stringify(encryptVault(vault), null, 2)}\n`, "utf8");
   await rename(tempFile, dataFile);
+}
+
+function readEncryptionKey(): string {
+  const value = process.env.ENCRYPTION_KEY;
+  if (!value || value.length < 32) {
+    throw new Error("ENCRYPTION_KEY must be set and at least 32 characters long");
+  }
+  return value;
+}
+
+function deriveEncryptionKey(): Buffer {
+  return scryptSync(encryptionKey, encryptionSalt, 32);
+}
+
+function encryptVault(vault: PersistedVault): EncryptedVault {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", deriveEncryptionKey(), iv);
+  const ciphertext = Buffer.concat([cipher.update(JSON.stringify(vault), "utf8"), cipher.final()]);
+
+  return {
+    version: 2,
+    algorithm: "aes-256-gcm",
+    iv: iv.toString("base64"),
+    authTag: cipher.getAuthTag().toString("base64"),
+    ciphertext: ciphertext.toString("base64"),
+    updatedAt: vault.updatedAt,
+  };
+}
+
+function decryptVault(vault: Partial<EncryptedVault>): PersistedVault {
+  if (!vault.iv || !vault.authTag || !vault.ciphertext) {
+    throw new Error("Invalid encrypted vault");
+  }
+
+  const decipher = createDecipheriv("aes-256-gcm", deriveEncryptionKey(), Buffer.from(vault.iv, "base64"));
+  decipher.setAuthTag(Buffer.from(vault.authTag, "base64"));
+  const plaintext = Buffer.concat([decipher.update(Buffer.from(vault.ciphertext, "base64")), decipher.final()]).toString("utf8");
+  return JSON.parse(plaintext) as PersistedVault;
+}
+
+function isEncryptedVault(value: Partial<PersistedVault> | Partial<EncryptedVault>): value is Partial<EncryptedVault> {
+  return "version" in value && value.version === 2 && "ciphertext" in value;
 }
 
 async function readJsonBody(request: IncomingMessage): Promise<unknown> {
@@ -147,7 +199,18 @@ function sanitizeState(value: unknown): WorkbenchState {
   const candidate = value as Partial<WorkbenchState>;
   return {
     commands: Array.isArray(candidate.commands) ? candidate.commands : [],
-    credentials: Array.isArray(candidate.credentials) ? candidate.credentials : [],
+    credentials: Array.isArray(candidate.credentials) ? candidate.credentials.map(normalizeCredential) : [],
     calendar: Array.isArray(candidate.calendar) ? candidate.calendar : [],
   };
+}
+
+function normalizeCredential(item: CredentialItem): CredentialItem {
+  return {
+    ...item,
+    password: normalizeCredentialPassword(item.password ?? ""),
+  };
+}
+
+function normalizeCredentialPassword(value: string): string {
+  return value.replace(/^[\t\r\n]+|[\t\r\n]+$/g, "");
 }

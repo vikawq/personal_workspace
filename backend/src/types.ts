@@ -36,3 +36,12 @@ export interface PersistedVault {
   state: WorkbenchState;
   updatedAt: string;
 }
+
+export interface EncryptedVault {
+  version: 2;
+  algorithm: "aes-256-gcm";
+  iv: string;
+  authTag: string;
+  ciphertext: string;
+  updatedAt: string;
+}
