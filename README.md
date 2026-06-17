@@ -77,6 +77,15 @@ HTTPS_PROXY=http://proxy.company.com:8080
 NO_PROXY=localhost,127.0.0.1,backend,frontend
 ```
 
+项目里的 `.npmrc` 已默认设置：
+
+```text
+always-auth=false
+strict-ssl=false
+```
+
+如果公司 npm 代理使用自签证书，这能减少 Docker 构建阶段的证书校验问题。若后续切到公网或安全要求更严格的环境，建议把 `strict-ssl` 改回 `true`。
+
 在 WSL 里进入项目目录后运行：
 
 ```bash
