@@ -145,6 +145,7 @@ h3 {
 .quick-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr) minmax(340px, 0.9fr);
+  margin-top: 18px;
   gap: 18px;
   align-items: stretch;
 }
@@ -295,8 +296,7 @@ textarea:focus {
 }
 
 .workspace {
-  margin-top: 18px;
-  min-height: 320px;
+  min-height: 420px;
   overflow: hidden;
 }
 

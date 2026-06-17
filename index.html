@@ -34,6 +34,24 @@
         <span class="sync-status" id="backendStatus">后端连接中</span>
       </section>
 
+      <section class="workspace">
+        <div class="list-head">
+          <div class="tabs" role="tablist" aria-label="工作台列表">
+            <button class="tab active" data-tab="commands" type="button">命令</button>
+            <button class="tab" data-tab="credentials" type="button">账号</button>
+            <button class="tab" data-tab="calendar" type="button">日历</button>
+          </div>
+          <label class="search">
+            <span aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" placeholder="搜索名称、内容、标签、IP" />
+          </label>
+        </div>
+        <div class="list" id="list"></div>
+        <div class="empty" id="emptyState" hidden>
+          暂无内容，先从下面的表单保存一条。
+        </div>
+      </section>
+
       <section class="quick-grid">
         <form class="panel composer" id="commandForm">
           <div class="panel-head">
@@ -121,24 +139,6 @@
           </div>
           <button class="primary" type="submit">保存日历</button>
         </form>
-      </section>
-
-      <section class="workspace">
-        <div class="list-head">
-          <div class="tabs" role="tablist" aria-label="工作台列表">
-            <button class="tab active" data-tab="commands" type="button">命令</button>
-            <button class="tab" data-tab="credentials" type="button">账号</button>
-            <button class="tab" data-tab="calendar" type="button">日历</button>
-          </div>
-          <label class="search">
-            <span aria-hidden="true">⌕</span>
-            <input id="searchInput" type="search" placeholder="搜索名称、内容、标签、IP" />
-          </label>
-        </div>
-        <div class="list" id="list"></div>
-        <div class="empty" id="emptyState" hidden>
-          暂无内容，先从上面的表单保存一条。
-        </div>
       </section>
     </main>
 
