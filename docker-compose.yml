@@ -1,6 +1,12 @@
 services:
   frontend:
-    build: .
+    build:
+      context: .
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-}
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,backend,frontend}
     container_name: personal-workbench-frontend
     ports:
       - "8080:8080"
@@ -12,6 +18,11 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-}
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,backend,frontend}
     container_name: personal-workbench-backend
     environment:
       - PORT=3000

@@ -57,6 +57,26 @@ npm.cmd run build
 
 ## WSL / Docker 一键部署
 
+如果公司网络需要 npm 镜像源或代理，先复制一份环境变量文件：
+
+```bash
+cp .env.example .env
+```
+
+只需要 npm 镜像源时，在 `.env` 里设置：
+
+```bash
+NPM_REGISTRY=https://registry.npmmirror.com
+```
+
+需要公司代理时，在 `.env` 里设置：
+
+```bash
+HTTP_PROXY=http://proxy.company.com:8080
+HTTPS_PROXY=http://proxy.company.com:8080
+NO_PROXY=localhost,127.0.0.1,backend,frontend
+```
+
 在 WSL 里进入项目目录后运行：
 
 ```bash
