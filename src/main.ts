@@ -178,7 +178,6 @@ function renderCredential(item: CredentialItem): HTMLElement {
     ["IP / Host", item.host],
     ["用户名", item.username],
     ["端口", item.port || "22"],
-    ["密码", item.password ? "••••••••" : "未保存"],
   ].forEach(([label, value]) => {
     const cell = document.createElement("div");
     const key = document.createElement("span");

@@ -35,7 +35,7 @@
       </section>
 
       <section class="workspace">
-        <div class="list-head">
+        <aside class="workspace-sidebar" aria-label="查看类型和搜索">
           <div class="tabs" role="tablist" aria-label="工作台列表">
             <button class="tab active" data-tab="commands" type="button">命令</button>
             <button class="tab" data-tab="credentials" type="button">账号</button>
@@ -45,10 +45,18 @@
             <span aria-hidden="true">⌕</span>
             <input id="searchInput" type="search" placeholder="搜索名称、内容、标签、IP" />
           </label>
-        </div>
-        <div class="list" id="list"></div>
-        <div class="empty" id="emptyState" hidden>
-          暂无内容，先从下面的表单保存一条。
+        </aside>
+        <div class="workspace-content">
+          <div class="list-head">
+            <div>
+              <p class="section-kicker">Saved Items</p>
+              <h2>查看</h2>
+            </div>
+          </div>
+          <div class="list" id="list"></div>
+          <div class="empty" id="emptyState" hidden>
+            暂无内容，先从下面的表单保存一条。
+          </div>
         </div>
       </section>
 
