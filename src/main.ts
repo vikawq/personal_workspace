@@ -108,6 +108,7 @@ function resetEditing(): void {
 }
 
 function render(): void {
+  els.list.dataset.tab = activeTab;
   const keyword = els.searchInput.value.trim().toLowerCase();
   const items = state[activeTab].filter((item) => stringifyItem(item).includes(keyword));
 

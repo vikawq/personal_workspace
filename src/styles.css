@@ -43,9 +43,10 @@ button,
 }
 
 .shell {
-  width: min(1360px, calc(100vw - 32px));
+  width: calc(100vw - 28px);
+  max-width: 1880px;
   margin: 0 auto;
-  padding: 28px 0 40px;
+  padding: 18px 0 28px;
 }
 
 .topbar {
@@ -106,7 +107,7 @@ h3 {
 }
 
 .notice {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   padding: 12px 14px;
   border: 1px solid #fde1bc;
   border-radius: 8px;
@@ -144,9 +145,9 @@ h3 {
 
 .quick-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr) minmax(340px, 0.9fr);
-  margin-top: 18px;
-  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
+  gap: 14px;
   align-items: stretch;
 }
 
@@ -161,9 +162,9 @@ h3 {
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  min-height: 430px;
-  padding: 18px;
+  gap: 12px;
+  min-height: 360px;
+  padding: 14px;
 }
 
 .panel-head {
@@ -212,7 +213,7 @@ input {
 }
 
 textarea {
-  min-height: 192px;
+  min-height: 144px;
   flex: 1;
   padding: 12px;
   resize: vertical;
@@ -221,7 +222,7 @@ textarea {
 }
 
 .calendar-panel textarea {
-  min-height: 116px;
+  min-height: 96px;
 }
 
 input:focus,
@@ -297,8 +298,8 @@ textarea:focus {
 
 .workspace {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  min-height: 420px;
+  grid-template-columns: 190px minmax(0, 1fr);
+  min-height: clamp(420px, 48vh, 620px);
   overflow: hidden;
 }
 
@@ -306,7 +307,7 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 14px;
+  padding: 12px;
   border-right: 1px solid var(--line);
   background: #fbfcfd;
 }
@@ -318,7 +319,7 @@ textarea:focus {
 .list-head {
   justify-content: space-between;
   gap: 14px;
-  padding: 14px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -370,6 +371,16 @@ textarea:focus {
   display: grid;
   gap: 12px;
   padding: 14px;
+}
+
+.list[data-tab="credentials"] {
+  grid-template-columns: repeat(auto-fill, minmax(680px, 1fr));
+  align-items: start;
+}
+
+.list[data-tab="calendar"] {
+  grid-template-columns: repeat(auto-fill, minmax(620px, 1fr));
+  align-items: start;
 }
 
 .item-card {
@@ -438,9 +449,20 @@ pre {
   max-width: 300px;
 }
 
+.list[data-tab="credentials"] .item-card,
+.list[data-tab="calendar"] .item-card {
+  grid-template-columns: 1fr;
+}
+
+.list[data-tab="credentials"] .actions,
+.list[data-tab="calendar"] .actions {
+  max-width: none;
+  justify-content: flex-start;
+}
+
 .credential-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(140px, 1fr) minmax(90px, 0.55fr);
   gap: 9px;
 }
 
@@ -543,6 +565,11 @@ pre {
     grid-template-columns: 180px minmax(0, 1fr);
   }
 
+  .list[data-tab="credentials"],
+  .list[data-tab="calendar"] {
+    grid-template-columns: 1fr;
+  }
+
   .panel {
     min-height: auto;
   }
@@ -550,8 +577,8 @@ pre {
 
 @media (max-width: 680px) {
   .shell {
-    width: min(100% - 20px, 1360px);
-    padding-top: 18px;
+    width: min(100% - 20px, 1880px);
+    padding-top: 14px;
   }
 
   .topbar,
