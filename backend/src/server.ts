@@ -15,6 +15,7 @@ const emptyState: WorkbenchState = {
   commands: [],
   credentials: [],
   calendar: [],
+  blogs: [],
 };
 
 createServer(async (request, response) => {
@@ -201,6 +202,7 @@ function sanitizeState(value: unknown): WorkbenchState {
     commands: Array.isArray(candidate.commands) ? candidate.commands : [],
     credentials: Array.isArray(candidate.credentials) ? candidate.credentials.map(normalizeCredential) : [],
     calendar: Array.isArray(candidate.calendar) ? candidate.calendar : [],
+    blogs: Array.isArray(candidate.blogs) ? candidate.blogs : [],
   };
 }
 

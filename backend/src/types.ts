@@ -26,10 +26,20 @@ export interface CalendarEntry {
   createdAt: string;
 }
 
+export interface BlogPost {
+  id: string;
+  title: string;
+  tags: string[];
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface WorkbenchState {
   commands: CommandItem[];
   credentials: CredentialItem[];
   calendar: CalendarEntry[];
+  blogs: BlogPost[];
 }
 
 export interface PersistedVault {

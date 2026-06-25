@@ -1,4 +1,5 @@
 export type Tab = "commands" | "credentials" | "calendar";
+export type AppMode = "console" | "blog";
 
 export interface CommandItem {
   id: string;
@@ -28,10 +29,20 @@ export interface CalendarEntry {
   createdAt: string;
 }
 
+export interface BlogPost {
+  id: string;
+  title: string;
+  tags: string[];
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface WorkbenchState {
   commands: CommandItem[];
   credentials: CredentialItem[];
   calendar: CalendarEntry[];
+  blogs: BlogPost[];
 }
 
 export type WorkbenchItem = CommandItem | CredentialItem | CalendarEntry;

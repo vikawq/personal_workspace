@@ -1,9 +1,12 @@
+import MarkdownIt from "markdown-it";
 import { loadRemoteState, saveRemoteState } from "./api";
 import { copyText, readClipboard } from "./clipboard";
 import { parseSshText } from "./ssh";
 import { loadState, normalizeCredentialPassword, sanitizeState, saveState } from "./storage";
 import type {
   CalendarEntry,
+  AppMode,
+  BlogPost,
   CommandItem,
   CredentialItem,
   DraftByTab,
@@ -15,11 +18,23 @@ import type {
 import "./styles.css";
 
 let state = loadState();
+let appMode: AppMode = "console";
 let activeTab: Tab = "commands";
 let editing: EditingState | null = null;
+let selectedBlogId: string | null = null;
+let editingBlogId: string | null = null;
 let toastTimer = 0;
+const markdown = new MarkdownIt({
+  html: false,
+  linkify: true,
+  breaks: true,
+});
 
 const els = {
+  consoleModeBtn: query<HTMLButtonElement>("#consoleModeBtn"),
+  blogModeBtn: query<HTMLButtonElement>("#blogModeBtn"),
+  consoleModeView: query<HTMLElement>("#consoleModeView"),
+  blogModeView: query<HTMLElement>("#blogModeView"),
   commandForm: query<HTMLFormElement>("#commandForm"),
   commandTitle: query<HTMLInputElement>("#commandTitle"),
   commandTags: query<HTMLInputElement>("#commandTags"),
@@ -51,6 +66,21 @@ const els = {
   commandTemplate: query<HTMLTemplateElement>("#commandCardTemplate"),
   credentialTemplate: query<HTMLTemplateElement>("#credentialCardTemplate"),
   calendarTemplate: query<HTMLTemplateElement>("#calendarCardTemplate"),
+  newBlogBtn: query<HTMLButtonElement>("#newBlogBtn"),
+  blogList: query<HTMLDivElement>("#blogList"),
+  blogViewer: query<HTMLDivElement>("#blogViewer"),
+  blogForm: query<HTMLFormElement>("#blogForm"),
+  editBlogBtn: query<HTMLButtonElement>("#editBlogBtn"),
+  deleteBlogBtn: query<HTMLButtonElement>("#deleteBlogBtn"),
+  cancelBlogBtn: query<HTMLButtonElement>("#cancelBlogBtn"),
+  blogTitleView: query<HTMLHeadingElement>("#blogTitleView"),
+  blogMetaView: query<HTMLParagraphElement>("#blogMetaView"),
+  blogRenderedView: query<HTMLElement>("#blogRenderedView"),
+  blogEditorTitle: query<HTMLHeadingElement>("#blogEditorTitle"),
+  blogTitleInput: query<HTMLInputElement>("#blogTitleInput"),
+  blogTagsInput: query<HTMLInputElement>("#blogTagsInput"),
+  blogContentInput: query<HTMLTextAreaElement>("#blogContentInput"),
+  blogLivePreview: query<HTMLElement>("#blogLivePreview"),
 };
 
 function query<T extends Element>(selector: string): T {
@@ -100,6 +130,24 @@ function setActiveTab(tab: Tab): void {
   render();
 }
 
+function setAppMode(mode: AppMode): void {
+  if (appMode === mode) {
+    return;
+  }
+
+  appMode = mode;
+  els.consoleModeBtn.classList.toggle("active", mode === "console");
+  els.blogModeBtn.classList.toggle("active", mode === "blog");
+  els.consoleModeView.hidden = mode !== "console";
+  els.blogModeView.hidden = mode !== "blog";
+
+  if (mode === "blog") {
+    renderBlogs();
+  } else {
+    render();
+  }
+}
+
 function resetEditing(): void {
   editing = null;
   query<HTMLButtonElement>("#commandForm button[type='submit']").textContent = "保存命令";
@@ -126,6 +174,98 @@ function render(): void {
         els.list.appendChild(renderCalendarEntry(item as CalendarEntry));
       }
     });
+}
+
+function renderBlogs(): void {
+  if (!selectedBlogId && state.blogs.length > 0) {
+    selectedBlogId = sortBlogs(state.blogs)[0]?.id ?? null;
+  }
+
+  renderBlogDirectory();
+
+  const selected = getSelectedBlog();
+  els.editBlogBtn.disabled = !selected;
+  els.deleteBlogBtn.disabled = !selected;
+
+  if (!selected) {
+    els.blogTitleView.textContent = "选择一篇博客";
+    els.blogMetaView.textContent = "从左侧目录选择，或新建一篇 Markdown 博客。";
+    els.blogRenderedView.innerHTML = "";
+    return;
+  }
+
+  els.blogTitleView.textContent = selected.title || "未命名博客";
+  els.blogMetaView.textContent = formatBlogMeta(selected);
+  els.blogRenderedView.innerHTML = renderMarkdown(selected.content);
+}
+
+function renderBlogDirectory(): void {
+  els.blogList.innerHTML = "";
+  const blogs = sortBlogs(state.blogs);
+
+  if (blogs.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "blog-empty";
+    empty.textContent = "暂无博客";
+    els.blogList.appendChild(empty);
+    return;
+  }
+
+  blogs.forEach((blog) => {
+    const button = document.createElement("button");
+    button.className = "blog-list-item";
+    button.type = "button";
+    button.classList.toggle("active", blog.id === selectedBlogId);
+    button.innerHTML = "<strong></strong><span></span>";
+    queryIn<HTMLElement>(button, "strong").textContent = blog.title || "未命名博客";
+    queryIn<HTMLSpanElement>(button, "span").textContent = formatBlogMeta(blog);
+    button.addEventListener("click", () => {
+      selectedBlogId = blog.id;
+      hideBlogEditor();
+      renderBlogs();
+    });
+    els.blogList.appendChild(button);
+  });
+}
+
+function sortBlogs(blogs: BlogPost[]): BlogPost[] {
+  return [...blogs].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+}
+
+function getSelectedBlog(): BlogPost | null {
+  return state.blogs.find((blog) => blog.id === selectedBlogId) ?? null;
+}
+
+function formatBlogMeta(blog: BlogPost): string {
+  const date = formatDate(blog.updatedAt);
+  const tags = blog.tags.length > 0 ? ` · ${blog.tags.join(", ")}` : "";
+  return `${date}${tags}`;
+}
+
+function renderMarkdown(value: string): string {
+  return markdown.render(value || "");
+}
+
+function showBlogEditor(blog?: BlogPost): void {
+  editingBlogId = blog?.id ?? null;
+  els.blogViewer.hidden = true;
+  els.blogForm.hidden = false;
+  els.blogEditorTitle.textContent = blog ? "修改博客" : "新建博客";
+  els.blogTitleInput.value = blog?.title ?? "";
+  els.blogTagsInput.value = blog?.tags.join(", ") ?? "";
+  els.blogContentInput.value = blog?.content ?? "# 新博客\n\n开始记录你的想法。";
+  updateBlogPreview();
+  els.blogTitleInput.focus();
+}
+
+function hideBlogEditor(): void {
+  editingBlogId = null;
+  els.blogForm.hidden = true;
+  els.blogViewer.hidden = false;
+}
+
+function updateBlogPreview(): void {
+  els.blogLivePreview.innerHTML = renderMarkdown(els.blogContentInput.value);
 }
 
 function sortItems(a: WorkbenchItem, b: WorkbenchItem): number {
@@ -431,6 +571,9 @@ els.todayBtn.addEventListener("click", () => {
   els.calendarDone.focus();
 });
 
+els.consoleModeBtn.addEventListener("click", () => setAppMode("console"));
+els.blogModeBtn.addEventListener("click", () => setAppMode("blog"));
+
 els.tabs.forEach((button) =>
   button.addEventListener("click", () => {
     const tab = button.dataset.tab;
@@ -440,6 +583,72 @@ els.tabs.forEach((button) =>
   }),
 );
 els.searchInput.addEventListener("input", render);
+
+els.newBlogBtn.addEventListener("click", () => showBlogEditor());
+els.editBlogBtn.addEventListener("click", () => {
+  const selected = getSelectedBlog();
+  if (selected) {
+    showBlogEditor(selected);
+  }
+});
+els.deleteBlogBtn.addEventListener("click", () => {
+  const selected = getSelectedBlog();
+  if (!selected || !confirm("确定删除这篇博客吗？")) {
+    return;
+  }
+
+  state.blogs = state.blogs.filter((blog) => blog.id !== selected.id);
+  selectedBlogId = state.blogs[0]?.id ?? null;
+  hideBlogEditor();
+  persistState();
+  renderBlogs();
+  showToast("博客已删除");
+});
+els.cancelBlogBtn.addEventListener("click", () => {
+  hideBlogEditor();
+  renderBlogs();
+});
+els.blogContentInput.addEventListener("input", updateBlogPreview);
+
+els.blogForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const now = new Date().toISOString();
+  const title = els.blogTitleInput.value.trim() || "未命名博客";
+  const tags = normalizeTags(els.blogTagsInput.value);
+  const content = els.blogContentInput.value;
+
+  if (editingBlogId) {
+    state.blogs = state.blogs.map((blog) =>
+      blog.id === editingBlogId
+        ? {
+            ...blog,
+            title,
+            tags,
+            content,
+            updatedAt: now,
+          }
+        : blog,
+    );
+    selectedBlogId = editingBlogId;
+    showToast("博客已更新");
+  } else {
+    const blog: BlogPost = {
+      id: crypto.randomUUID(),
+      title,
+      tags,
+      content,
+      createdAt: now,
+      updatedAt: now,
+    };
+    state.blogs.push(blog);
+    selectedBlogId = blog.id;
+    showToast("博客已保存");
+  }
+
+  hideBlogEditor();
+  persistState();
+  renderBlogs();
+});
 
 els.exportBtn.addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -480,10 +689,13 @@ els.clearAllBtn.addEventListener("click", () => {
     return;
   }
 
-  state = { commands: [], credentials: [], calendar: [] };
+  state = { commands: [], credentials: [], calendar: [], blogs: [] };
+  selectedBlogId = null;
+  hideBlogEditor();
   resetEditing();
   persistState();
   render();
+  renderBlogs();
   showToast("已清空");
 });
 
@@ -526,6 +738,7 @@ async function hydrateFromBackend(): Promise<void> {
         await saveRemoteState(state);
       }
       render();
+      renderBlogs();
       setBackendStatus("后端已连接", "ok");
       return;
     }
@@ -543,9 +756,10 @@ async function hydrateFromBackend(): Promise<void> {
 }
 
 function hasContent(value: WorkbenchState): boolean {
-  return value.commands.length > 0 || value.credentials.length > 0 || value.calendar.length > 0;
+  return value.commands.length > 0 || value.credentials.length > 0 || value.calendar.length > 0 || value.blogs.length > 0;
 }
 
 setToday();
 render();
+renderBlogs();
 void hydrateFromBackend();

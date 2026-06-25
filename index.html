@@ -8,9 +8,15 @@
   <body>
     <main class="shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Algorithm Engineer Console</p>
-          <h1>个人工作台</h1>
+        <div class="brand-block">
+          <div class="mode-switch" aria-label="模式切换">
+            <button class="mode-button active" id="consoleModeBtn" type="button">命令台模式</button>
+            <button class="mode-button" id="blogModeBtn" type="button">博客模式</button>
+          </div>
+          <div>
+            <p class="eyebrow">Algorithm Engineer Console</p>
+            <h1>个人工作台</h1>
+          </div>
         </div>
         <div class="toolbar">
           <button class="ghost" id="exportBtn" type="button" title="导出 JSON">
@@ -30,123 +36,187 @@
 
       <section class="notice" role="note">
         <strong>本地存储提示：</strong>
-        数据保存在当前浏览器的 localStorage。适合个人离线工作台；如果要多人共用或保存高敏密码，建议后续接入加密后端。
+        后端磁盘只保存密文，浏览器 localStorage 作为离线缓存。
         <span class="sync-status" id="backendStatus">后端连接中</span>
       </section>
 
-      <section class="workspace">
-        <aside class="workspace-sidebar" aria-label="查看类型和搜索">
-          <div class="tabs" role="tablist" aria-label="工作台列表">
-            <button class="tab active" data-tab="commands" type="button">命令</button>
-            <button class="tab" data-tab="credentials" type="button">账号</button>
-            <button class="tab" data-tab="calendar" type="button">日历</button>
-          </div>
-          <label class="search">
-            <span aria-hidden="true">⌕</span>
-            <input id="searchInput" type="search" placeholder="搜索名称、内容、标签、IP" />
-          </label>
-        </aside>
-        <div class="workspace-content">
-          <div class="list-head">
-            <div>
-              <p class="section-kicker">Saved Items</p>
-              <h2>查看</h2>
+      <section class="mode-view" id="consoleModeView">
+        <section class="workspace">
+          <aside class="workspace-sidebar" aria-label="查看类型和搜索">
+            <div class="tabs" role="tablist" aria-label="工作台列表">
+              <button class="tab active" data-tab="commands" type="button">命令</button>
+              <button class="tab" data-tab="credentials" type="button">账号</button>
+              <button class="tab" data-tab="calendar" type="button">日历</button>
+            </div>
+            <label class="search">
+              <span aria-hidden="true">⌕</span>
+              <input id="searchInput" type="search" placeholder="搜索名称、内容、标签、IP" />
+            </label>
+          </aside>
+          <div class="workspace-content">
+            <div class="list-head">
+              <div>
+                <p class="section-kicker">Saved Items</p>
+                <h2>查看</h2>
+              </div>
+            </div>
+            <div class="list" id="list"></div>
+            <div class="empty" id="emptyState" hidden>
+              暂无内容，先从下面的表单保存一条。
             </div>
           </div>
-          <div class="list" id="list"></div>
-          <div class="empty" id="emptyState" hidden>
-            暂无内容，先从下面的表单保存一条。
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="quick-grid">
-        <form class="panel composer" id="commandForm">
-          <div class="panel-head">
-            <div>
-              <p class="section-kicker">Commands</p>
-              <h2>命令暂存</h2>
+        <section class="quick-grid">
+          <form class="panel composer" id="commandForm">
+            <div class="panel-head">
+              <div>
+                <p class="section-kicker">Commands</p>
+                <h2>命令暂存</h2>
+              </div>
+              <button class="secondary" id="pasteCommandBtn" type="button">粘贴剪贴板</button>
             </div>
-            <button class="secondary" id="pasteCommandBtn" type="button">粘贴剪贴板</button>
-          </div>
-          <div class="form-row">
-            <label for="commandTitle">名称</label>
-            <input id="commandTitle" name="title" type="text" placeholder="如：启动训练任务" autocomplete="off" />
-          </div>
-          <div class="form-row">
-            <label for="commandTags">标签</label>
-            <input id="commandTags" name="tags" type="text" placeholder="gpu, docker, train" autocomplete="off" />
-          </div>
-          <div class="form-row grow">
-            <label for="commandText">命令</label>
-            <textarea id="commandText" name="command" placeholder="把常用命令粘贴到这里"></textarea>
-          </div>
-          <button class="primary" type="submit">保存命令</button>
-        </form>
+            <div class="form-row">
+              <label for="commandTitle">名称</label>
+              <input id="commandTitle" name="title" type="text" placeholder="如：启动训练任务" autocomplete="off" />
+            </div>
+            <div class="form-row">
+              <label for="commandTags">标签</label>
+              <input id="commandTags" name="tags" type="text" placeholder="gpu, docker, train" autocomplete="off" />
+            </div>
+            <div class="form-row grow">
+              <label for="commandText">命令</label>
+              <textarea id="commandText" name="command" placeholder="把常用命令粘贴到这里"></textarea>
+            </div>
+            <button class="primary" type="submit">保存命令</button>
+          </form>
 
-        <form class="panel composer" id="credentialForm">
-          <div class="panel-head">
-            <div>
-              <p class="section-kicker">SSH & Accounts</p>
-              <h2>服务器账号</h2>
+          <form class="panel composer" id="credentialForm">
+            <div class="panel-head">
+              <div>
+                <p class="section-kicker">SSH & Accounts</p>
+                <h2>服务器账号</h2>
+              </div>
+              <button class="secondary" id="pasteIpBtn" type="button">粘贴 IP</button>
             </div>
-            <button class="secondary" id="pasteIpBtn" type="button">粘贴 IP</button>
-          </div>
-          <div class="field-grid">
             <div class="form-row">
               <label for="credentialName">名称</label>
               <input id="credentialName" name="name" type="text" placeholder="如：A100 训练机" autocomplete="off" />
             </div>
-            <div class="form-row">
-              <label for="credentialHost">IP / Host</label>
-              <input id="credentialHost" name="host" type="text" placeholder="192.168.1.10" autocomplete="off" />
+            <div class="field-grid">
+              <div class="form-row">
+                <label for="credentialHost">IP / Host</label>
+                <input id="credentialHost" name="host" type="text" placeholder="192.168.1.10" autocomplete="off" />
+              </div>
+              <div class="form-row">
+                <label for="credentialUser">用户名</label>
+                <input id="credentialUser" name="username" type="text" placeholder="root / user" autocomplete="off" />
+              </div>
+              <div class="form-row">
+                <label for="credentialPort">端口</label>
+                <input id="credentialPort" name="port" type="number" placeholder="22" min="1" max="65535" />
+              </div>
             </div>
             <div class="form-row">
-              <label for="credentialUser">用户名</label>
-              <input id="credentialUser" name="username" type="text" placeholder="root / user" autocomplete="off" />
+              <label for="credentialPassword">密码 / Token</label>
+              <input id="credentialPassword" name="password" type="password" placeholder="可留空" autocomplete="new-password" />
             </div>
             <div class="form-row">
-              <label for="credentialPort">端口</label>
-              <input id="credentialPort" name="port" type="number" placeholder="22" min="1" max="65535" />
+              <label for="credentialNote">备注</label>
+              <input id="credentialNote" name="note" type="text" placeholder="内网/VPN/项目说明" autocomplete="off" />
             </div>
-          </div>
-          <div class="form-row">
-            <label for="credentialPassword">密码 / Token</label>
-            <input id="credentialPassword" name="password" type="password" placeholder="可留空" autocomplete="new-password" />
-          </div>
-          <div class="form-row">
-            <label for="credentialNote">备注</label>
-            <input id="credentialNote" name="note" type="text" placeholder="内网/VPN/项目说明" autocomplete="off" />
-          </div>
-          <button class="primary" type="submit">保存账号</button>
-        </form>
+            <button class="primary" type="submit">保存账号</button>
+          </form>
 
-        <form class="panel composer calendar-panel" id="calendarForm">
-          <div class="panel-head">
-            <div>
-              <p class="section-kicker">Work Calendar</p>
-              <h2>工作日历</h2>
+          <form class="panel composer calendar-panel" id="calendarForm">
+            <div class="panel-head">
+              <div>
+                <p class="section-kicker">Work Calendar</p>
+                <h2>工作日历</h2>
+              </div>
+              <button class="secondary" id="todayBtn" type="button">今天</button>
             </div>
-            <button class="secondary" id="todayBtn" type="button">今天</button>
+            <div class="form-row">
+              <label for="calendarDate">日期</label>
+              <input id="calendarDate" name="date" type="date" />
+            </div>
+            <div class="form-row grow">
+              <label for="calendarDone">已经做了</label>
+              <textarea id="calendarDone" name="done" placeholder="今天完成了哪些事情"></textarea>
+            </div>
+            <div class="form-row grow">
+              <label for="calendarPlanned">计划去做</label>
+              <textarea id="calendarPlanned" name="planned" placeholder="接下来计划推进什么"></textarea>
+            </div>
+            <div class="form-row">
+              <label for="calendarNote">备注</label>
+              <input id="calendarNote" name="note" type="text" placeholder="阻塞、风险、会议结论等" autocomplete="off" />
+            </div>
+            <button class="primary" type="submit">保存日历</button>
+          </form>
+        </section>
+      </section>
+
+      <section class="mode-view blog-mode" id="blogModeView" hidden>
+        <aside class="blog-directory">
+          <div class="blog-directory-head">
+            <div>
+              <p class="section-kicker">Markdown</p>
+              <h2>博客目录</h2>
+            </div>
+            <button class="primary small" id="newBlogBtn" type="button">新建博客</button>
           </div>
-          <div class="form-row">
-            <label for="calendarDate">日期</label>
-            <input id="calendarDate" name="date" type="date" />
+          <div class="blog-list" id="blogList"></div>
+        </aside>
+        <section class="blog-content">
+          <div class="blog-viewer" id="blogViewer">
+            <div class="blog-toolbar">
+              <div>
+                <p class="section-kicker">Preview</p>
+                <h2 id="blogTitleView">选择一篇博客</h2>
+                <p class="blog-meta" id="blogMetaView">从左侧目录选择，或新建一篇 Markdown 博客。</p>
+              </div>
+              <div class="actions">
+                <button class="secondary small" id="editBlogBtn" type="button">修改</button>
+                <button class="danger small" id="deleteBlogBtn" type="button">删除</button>
+              </div>
+            </div>
+            <article class="markdown-body" id="blogRenderedView"></article>
           </div>
-          <div class="form-row grow">
-            <label for="calendarDone">已经做了</label>
-            <textarea id="calendarDone" name="done" placeholder="今天完成了哪些事情"></textarea>
-          </div>
-          <div class="form-row grow">
-            <label for="calendarPlanned">计划去做</label>
-            <textarea id="calendarPlanned" name="planned" placeholder="接下来计划推进什么"></textarea>
-          </div>
-          <div class="form-row">
-            <label for="calendarNote">备注</label>
-            <input id="calendarNote" name="note" type="text" placeholder="阻塞、风险、会议结论等" autocomplete="off" />
-          </div>
-          <button class="primary" type="submit">保存日历</button>
-        </form>
+
+          <form class="blog-editor" id="blogForm" hidden>
+            <div class="blog-toolbar">
+              <div>
+                <p class="section-kicker">Live Markdown</p>
+                <h2 id="blogEditorTitle">新建博客</h2>
+              </div>
+              <div class="actions">
+                <button class="secondary small" id="cancelBlogBtn" type="button">取消</button>
+                <button class="primary small" type="submit">保存博客</button>
+              </div>
+            </div>
+            <div class="blog-fields">
+              <div class="form-row">
+                <label for="blogTitleInput">标题</label>
+                <input id="blogTitleInput" type="text" placeholder="博客标题" autocomplete="off" />
+              </div>
+              <div class="form-row">
+                <label for="blogTagsInput">标签</label>
+                <input id="blogTagsInput" type="text" placeholder="markdown, note, review" autocomplete="off" />
+              </div>
+            </div>
+            <div class="markdown-editor-grid">
+              <div class="form-row grow">
+                <label for="blogContentInput">Markdown</label>
+                <textarea id="blogContentInput" placeholder="# 标题&#10;&#10;这里开始写博客内容"></textarea>
+              </div>
+              <section class="markdown-preview">
+                <span>实时预览</span>
+                <article class="markdown-body" id="blogLivePreview"></article>
+              </section>
+            </div>
+          </form>
+        </section>
       </section>
     </main>
 

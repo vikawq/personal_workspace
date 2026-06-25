@@ -23,6 +23,7 @@ export const defaultState: WorkbenchState = {
   ],
   credentials: [],
   calendar: [],
+  blogs: [],
 };
 
 export function loadState(): WorkbenchState {
@@ -48,6 +49,7 @@ export function sanitizeState(value: Partial<WorkbenchState>): WorkbenchState {
     commands: Array.isArray(value.commands) ? value.commands : [],
     credentials: Array.isArray(value.credentials) ? value.credentials.map(normalizeCredential) : [],
     calendar: Array.isArray(value.calendar) ? value.calendar : [],
+    blogs: Array.isArray(value.blogs) ? value.blogs : [],
   };
 }
 
